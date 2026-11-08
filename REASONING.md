@@ -56,5 +56,8 @@ misread. Those entries belong in the correction commits.
 ## P15
 `lambda` is a macro that creates an anonymous function. The function is created but not called, so no multiplication occurs. The result is a function rather than a list or number.
 
+Correction:
+Value should be `#<function>` not the function `#(*,n,2)` itself. A misinterpretation of the grader notation.
+
 ## P16
 `let` creates a variable named factor with the value 2. The `lambda` function is defined while factor is 2, so it remembers that value. When `funcall` calls the function with 3, it multiplies 3 by the captured value of factor and returns a number, so the length is none. This differs from P10, where dynamic scope allows the function to see the newer binding.
