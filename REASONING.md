@@ -36,25 +36,28 @@ cons is a function that makes a new list that puts its first argument in front o
 if evaluates the condition first. (null '()) is true, so only the first branch runs, and 'empty gives the symbol empty, written in lowercase, so the kind is symbol and the length is none. if is special because it never evaluates the other branch.
 
 ## P09
-and evaluates from left to right and stops at the first nil, returning it. The 1 is true so it keeps going, then it hits nil and stops, so the 3 is never evaluated. The value is nil so the kind is null and the length is 0. PCL calls and a macro, but CLISP also answers yes to special-operator-p that is why it's considered as special-operator.
+`and` is a special operator that evaluates its arguments from left to right and stops when it encounters nil. Since one of the arguments is nil, evaluation stops immediately and returns nil. The result is the empty list.
 
 ## P10
-defvar makes *ps3-rate* a special (dynamic) variable. Once it's special, the let doesn't create a new private variable, instead, it rebinds the global one while the let body runs. ps3-scale reads *ps3-rate* while that's happening and sees 10, so 3 x 10 = 30, which is an integer so the length is none. The starting element is progn, which is a special operator that evaluates its forms in order and returns the last one's value.
+`progn` is a special operator that evaluates its forms in sequence and returns the value of the last one. `defvar` creates a special variable and `defun` defines a function. Because special variables use dynamic scope, the `let` binding is visible during the function call. The function uses the locally bound value instead of the global one and returns a number.
 
 ## P11
-The manual says definitions return the defined name, so the result is the symbol ps3-twice, so the kind is symbol and the length is none. defun is a macro that expands into lower-level code.
+`defun` is a macro that defines a function. Its value is the function's symbol.
 
 ## P12
-labels is a special operator that defines local functions that can call themselves. down conses n onto (down (- n 1)) until the base case returns just '(). That gives (cons 3 (cons 2 (cons 1 nil))), which is (3 2 1), so the kind is cons and the length is 3.
+`labels` is a special operator that allows the local function down to call itself recursively. Starting from 3, each call uses cons to place the current value of n at the front of the list produced by the next call until the base case returns the empty list. The result is a list, so its length is the number of elements in that list.
 
 ## P13
-#' is shorthand for (function ...), so #'length passes the length function itself. mapcar is a function that calls it on each element, and the empty list () has length 0, so the result is (2,0,1) with kind cons and length 3.
+`mapcar` is a function that applies a function to each element of a list and collects the results. The length function is applied to each sublist, producing a new list of lengths. The result is a list with the same number of elements as the input list.
 
 ## P14
-Similar to P13 that mapcar calls the function on each element, and mapcar is the head so the operator is function. lambda just creates an anonymous function object without calling it that expands to something like (function (lambda ...)). Then the function just squares each element (* n n) thus (1,4,9) with kind cons and length 3.
+`mapcar` applies the lambda function to every element of the given list. The `lambda` squares each number and returns the result. `mapcar` collects those values into a new list.
 
 ## P15
-As explained in P14 for the lambda, evaluating it just creates a function object, so the kind is function, and the grader writes every function object as #<function>. A function isn't a sequence, so its length is none, and the manual says that lambda is a macro.
+`lambda` is a macro that creates an anonymous function. The function is created but not called, so no multiplication occurs. The result is a function rather than a list or number.
+
+Correction:
+Value should be `#<function>` not the function `#(*,n,2)` itself. A misinterpretation of the grader notation.
 
 ## P16
-factor is an ordinary lexical variable. The lambda captures the binding that's visible where it's written, which holds 2. The inner factor 10 is a different variable that lambda never sees, so 3 x 2 = 6, which is an integer so the length is none, and the outermost head is let, a special operator.
+`let` creates a variable named factor with the value 2. The `lambda` function is defined while factor is 2, so it remembers that value. When `funcall` calls the function with 3, it multiplies 3 by the captured value of factor and returns a number, so the length is none. This differs from P10, where dynamic scope allows the function to see the newer binding.
