@@ -26,8 +26,14 @@
 
 The first match wins, so an inner binding shadows an outer one that shares its
 name. Signal an error when NAME is not bound at all."
-  (declare (ignore name env))
-  (error "lookup is not implemented"))
+  ;; assoc scans env from the front and gives back the first (name . value)
+  ;; pair, so an inner binding is found before an outer one.
+  (let ((pair (assoc name env)))
+    ;; Test the pair, not the value: (x . nil) is a real binding whose value
+    ;; happens to be nil, so checking the cdr would call it unbound.
+    (if pair
+        (cdr pair)
+        (error "lookup: ~s is not bound" name))))
 
 ;;; E2 -- prefix arithmetic.
 
@@ -91,5 +97,11 @@ CLOSURE is not a closure, and when the argument count does not match."
 
 Order the branches with care. NIL is a symbol as well as the empty list, and a
 number is not a cons, so the atom tests come before the list tests."
-  (declare (ignore expr env))
-  (error "eval-expr is not implemented"))
+  (cond
+    ;; A number evaluates to itself.
+    ((numberp expr) expr)
+    ;; A symbol is a variable name, so its value comes from env. nil lands
+    ;; here too, since it is a symbol, and gets looked up like any other name.
+    ((symbolp expr) (lookup expr env))
+    ;; Lists (arithmetic, let, lambda, calls) are E2 to E4.
+    (t (error "eval-expr: cannot evaluate ~s yet" expr))))
