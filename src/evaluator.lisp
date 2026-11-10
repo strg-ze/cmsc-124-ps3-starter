@@ -42,15 +42,23 @@ name. Signal an error when NAME is not bound at all."
 
 MAPCAR and a LAMBDA do this in one line. Watch the arity: EVAL-EXPR takes two
 arguments and MAPCAR hands its function one."
-  (declare (ignore exprs env))
-  (error "eval-operands is not implemented"))
+  ;; mapcar calls its function with one element, but eval-expr also needs env,
+  ;; so the lambda takes the element and passes env along with it.
+  (mapcar (lambda (e) (eval-expr e env)) exprs))
 
 (defun apply-op (op values)
   "Apply the arithmetic operator OP to the two numbers in VALUES.
 
 OP is the symbol +, -, or *. Signal an error for anything else."
-  (declare (ignore op values))
-  (error "apply-op is not implemented"))
+  ;; values is already evaluated, e.g. (2 3), so this only picks the host
+  ;; operator. case compares op with eql, which works for symbols.
+  (let ((a (first values))
+        (b (second values)))
+    (case op
+      (+ (+ a b))
+      (- (- a b))
+      (* (* a b))
+      (otherwise (error "apply-op: unknown operator ~s" op)))))
 
 ;;; E3 -- let.
 
@@ -103,5 +111,10 @@ number is not a cons, so the atom tests come before the list tests."
     ;; A symbol is a variable name, so its value comes from env. nil lands
     ;; here too, since it is a symbol, and gets looked up like any other name.
     ((symbolp expr) (lookup expr env))
-    ;; Lists (arithmetic, let, lambda, calls) are E2 to E4.
+    ;; (+ a b), (- a b), (* a b): evaluate both operands first, then apply.
+    ;; This only matches those three heads, so let, lambda, and calls can
+    ;; go in their own branches before the last one.
+    ((and (consp expr) (member (first expr) '(+ - *)))
+     (apply-op (first expr) (eval-operands (rest expr) env)))
+    ;; let, lambda, and calls are E3 and E4.
     (t (error "eval-expr: cannot evaluate ~s yet" expr))))
