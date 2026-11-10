@@ -26,8 +26,14 @@
 
 The first match wins, so an inner binding shadows an outer one that shares its
 name. Signal an error when NAME is not bound at all."
-  (declare (ignore name env))
-  (error "lookup is not implemented"))
+  ;; assoc scans env from the front and gives back the first (name . value)
+  ;; pair, so an inner binding is found before an outer one.
+  (let ((pair (assoc name env)))
+    ;; Test the pair, not the value: (x . nil) is a real binding whose value
+    ;; happens to be nil, so checking the cdr would call it unbound.
+    (if pair
+        (cdr pair)
+        (error "lookup: ~s is not bound" name))))
 
 ;;; E2 -- prefix arithmetic.
 
@@ -36,15 +42,23 @@ name. Signal an error when NAME is not bound at all."
 
 MAPCAR and a LAMBDA do this in one line. Watch the arity: EVAL-EXPR takes two
 arguments and MAPCAR hands its function one."
-  (declare (ignore exprs env))
-  (error "eval-operands is not implemented"))
+  ;; mapcar calls its function with one element, but eval-expr also needs env,
+  ;; so the lambda takes the element and passes env along with it.
+  (mapcar (lambda (e) (eval-expr e env)) exprs))
 
 (defun apply-op (op values)
   "Apply the arithmetic operator OP to the two numbers in VALUES.
 
 OP is the symbol +, -, or *. Signal an error for anything else."
-  (declare (ignore op values))
-  (error "apply-op is not implemented"))
+  ;; values is already evaluated, e.g. (2 3), so this only picks the host
+  ;; operator. case compares op with eql, which works for symbols.
+  (let ((a (first values))
+        (b (second values)))
+    (case op
+      (+ (+ a b))
+      (- (- a b))
+      (* (* a b))
+      (otherwise (error "apply-op: unknown operator ~s" op)))))
 
 ;;; E3 -- let.
 
